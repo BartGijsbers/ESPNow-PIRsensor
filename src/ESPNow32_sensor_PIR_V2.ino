@@ -1,4 +1,6 @@
 /*
+   
+   
    24-02-2020 After testing noticed i forgot the LED blink code
 
    23-02-2020 After BME sensor now update the PIR code for the new version
@@ -80,9 +82,9 @@ const char *sensorName = "espnowpirsensor";
 const char *homeseer = HOMESEER_IP;
 
 RTC_DATA_ATTR int bootCount = 0;
-RTC_DATA_ATTR int sleepTime = 1200;  //updateble via MQTT
-RTC_DATA_ATTR int cmd = 101;         //updateble via MQTT
-RTC_DATA_ATTR int motionTime = 30;   //updateble via MQTT
+RTC_DATA_ATTR int sleepTime = 1200; //updateble via MQTT
+RTC_DATA_ATTR int cmd = 101;        //updateble via MQTT
+RTC_DATA_ATTR int motionTime = 30;  //updateble via MQTT
 RTC_DATA_ATTR esp_now_peer_info_t slave;
 RTC_DATA_ATTR int failCount = 0;    //counts the number of unsuccessfull transmits
 RTC_DATA_ATTR int backoffTimer = 1; //increaces the reboot time when no gateway is found
@@ -117,7 +119,8 @@ void setup()
   esp_now_register_send_cb(OnDataSent);
   esp_now_register_recv_cb(OnDataRecv);
   delay(2);
-  if (failCount > 5) { // we missed the gateway 5 times. search for new gateway
+  if (failCount > 5)
+  { // we missed the gateway 5 times. search for new gateway
     failCount = 0;
     bootCount = 0;
   }
@@ -127,7 +130,8 @@ void setup()
     Serial.println(WiFi.macAddress());
     ScanForGateways();
     backoffTimer = backoffTimer * 2;
-    if (backoffTimer > 7200) backoffTimer = 7200;
+    if (backoffTimer > 7200)
+      backoffTimer = 7200;
     esp_deep_sleep_enable_timer_wakeup(backoffTimer * uS_TO_S_FACTOR);
     Serial.print("Going to sleep now backofftimer is: ");
     Serial.println(backoffTimer);
@@ -341,8 +345,8 @@ void ScanForGateways()
   */
 }
 
-// callback when data is sent from Master to Slave
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+{ // callback when data is sent from Master to Slave
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
@@ -353,41 +357,52 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   failCount = 0;
   backoffTimer = 1;
   readingSent = true;
-  if (status != 0) {
+  if (status != 0)
+  {
     readingSent = false;
   }
 }
-void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len)
+{ // callback when receiving data
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   Serial.print("Last Packet Recv from: ");
   Serial.println(macStr);
   Serial.print("Last Packet Recv Data: ");
-  for (int i = 0; i < (data_len-1); i++) {
+  for (int i = 0; i < (data_len - 1); i++)
+  {
     bs[i] = data[i];
     Serial.print(bs[i]);
   }
   Serial.println();
   cmdReceived = true;
 }
-void addPeer() {
+void addPeer()
+{
   esp_wifi_set_promiscuous(true); // we need to set promiscuous first in order to set the channel (do't ask me why)
   esp_wifi_set_channel(slave.channel, WIFI_SECOND_CHAN_NONE);
   esp_wifi_set_promiscuous(false);
   slave.encrypt = 0;
   const esp_now_peer_info_t *peer = &slave;
   esp_err_t addStatus = esp_now_add_peer(peer);
-  if (addStatus == ESP_OK) {
+  if (addStatus == ESP_OK)
+  {
     // Pair success
     // Serial.println("Pair success");
   }
-  else if (addStatus == ESP_ERR_ESPNOW_NOT_INIT) Serial.println("ESPNOW Not Init");
-  else if (addStatus == ESP_ERR_ESPNOW_ARG)      Serial.println("Invalid Argument");
-  else if (addStatus == ESP_ERR_ESPNOW_FULL)     Serial.println("Peer list full");
-  else if (addStatus == ESP_ERR_ESPNOW_NO_MEM)   Serial.println("Out of memory");
-  else if (addStatus == ESP_ERR_ESPNOW_EXIST)    Serial.println("Peer Exists");
-  else Serial.println("Not sure what happened");
+  else if (addStatus == ESP_ERR_ESPNOW_NOT_INIT)
+    Serial.println("ESPNOW Not Init");
+  else if (addStatus == ESP_ERR_ESPNOW_ARG)
+    Serial.println("Invalid Argument");
+  else if (addStatus == ESP_ERR_ESPNOW_FULL)
+    Serial.println("Peer list full");
+  else if (addStatus == ESP_ERR_ESPNOW_NO_MEM)
+    Serial.println("Out of memory");
+  else if (addStatus == ESP_ERR_ESPNOW_EXIST)
+    Serial.println("Peer Exists");
+  else
+    Serial.println("Not sure what happened");
 }
 void sendData()
 { // send data
@@ -410,7 +425,7 @@ void sendData()
   root["updatefreq"] = sleepTime;
   root["failCount"] = failCount;
   root["motion"] = sensorReading;
-  
+
   char jsonStr[root.measureLength() + 1];
   root.printTo((char *)jsonStr, root.measureLength() + 1);
   jsonStr[root.measureLength() + 1] = '\0';
@@ -452,38 +467,45 @@ void sendData()
   jsonBuffer.clear();
 } // end sendData
 
-void initOTA() {
+void initOTA()
+{
   ArduinoOTA.setHostname(sensorName);
   ArduinoOTA
-    .onStart([]() {
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH)
-        type = "sketch";
-      else // U_SPIFFS
-        type = "filesystem";
+      .onStart([]() {
+        String type;
+        if (ArduinoOTA.getCommand() == U_FLASH)
+          type = "sketch";
+        else // U_SPIFFS
+          type = "filesystem";
 
-      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type);
-    })
-    .onEnd([]() {
-      Serial.println("\nEnd");
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    })
-    .onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
-      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
+        // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+        Serial.println("Start updating " + type);
+      })
+      .onEnd([]() {
+        Serial.println("\nEnd");
+      })
+      .onProgress([](unsigned int progress, unsigned int total) {
+        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+      })
+      .onError([](ota_error_t error) {
+        Serial.printf("Error[%u]: ", error);
+        if (error == OTA_AUTH_ERROR)
+          Serial.println("Auth Failed");
+        else if (error == OTA_BEGIN_ERROR)
+          Serial.println("Begin Failed");
+        else if (error == OTA_CONNECT_ERROR)
+          Serial.println("Connect Failed");
+        else if (error == OTA_RECEIVE_ERROR)
+          Serial.println("Receive Failed");
+        else if (error == OTA_END_ERROR)
+          Serial.println("End Failed");
+      });
 
   ArduinoOTA.begin();
 }
 //Webserver routines
-void initWebServer(){
+void initWebServer()
+{
   server.on("/", handleRoot);
   server.on("/restart", restart);
   server.on("/updateOTA", updateOTA);
@@ -493,19 +515,20 @@ void initWebServer(){
   Serial.println("HTTP server started");
   delay(100);
 }
-void updateOTA() {
+void updateOTA()
+{
   server.send(200, "text/plain", "Going into OTA programming mode");
   flagOTA = true;
 }
-void cancelUpdateOTA() {
+void cancelUpdateOTA()
+{
   server.send(200, "text/plain", "Canceling OTA programming mode");
   flagOTA = false;
 }
-void handleRoot() {
-  String message = "Hello from sensor 0.2";
-  message += "\n\nProgram: ESPNow_mqtt_json_sensor_esp32_v1.2\n";
-//  message += "Current time: ";
-//  message += timeClient.getFormattedTime();
+void handleRoot()
+{
+  String message = "Hello from sensor 2.0";
+  message += "\n\nProgram: ESPNow32_sensor_PIR_V2.0\n";
   message += "\nUsages:\n";
   message += "/                  - This messages\n";
   message += "/updateOTA         - Put device in OTA programming mode\n";
@@ -524,23 +547,25 @@ void handleRoot() {
   message += "\n\n";
   server.send(200, "text/plain", message);
 }
-void restart() {
+void restart()
+{
   server.send(200, "text/plain", "OK restarting");
   delay(2000);
   ESP.restart();
 }
-void handleNotFound(){
+void handleNotFound()
+{
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += server.uri();
   message += "\nMethod: ";
-  message += (server.method() == HTTP_GET)?"GET":"POST";
+  message += (server.method() == HTTP_GET) ? "GET" : "POST";
   message += "\nArguments: ";
   message += server.args();
   message += "\n";
-  for (uint8_t i=0; i<server.args(); i++){
+  for (uint8_t i = 0; i < server.args(); i++)
+  {
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
   server.send(404, "text/plain", message);
 }
-

@@ -51,3 +51,6 @@ After sending data sensor will wait (50msec) to see if there is data to receive.
 * A gateway supports a maximum of 20 sensors. You can have multiply gateways.
 * The range of espnow is very good. Because it used a low bandwith. It is much better then WiFi.
 * Battery live with a 1500mah battery is around 1.5 years.
+
+![image](https://github.com/BartGijsbers/ESPNow-PIRsensor/blob/main/images/PIRsensor.jpg)
+![image](https://github.com/BartGijsbers/ESPNow-PIRsensor/blob/main/images/Tempsensor.jpg)
